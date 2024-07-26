@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	"awesomeProject1/database"
-	"awesomeProject1/models"
+	"Reminders/internal/database"
+	"Reminders/internal/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
 )
 
 // GetMessageByUserIDHandler godoc
-// @Summary Get reminders by user ID
-// @Description Retrieve all reminders for a specific user
+// @Summary Поиск напоминаний по user_id
+// @Description Получить все напоминания для конкретного пользователя
 // @Tags reminders
 // @Accept json
 // @Produce json
@@ -36,13 +36,12 @@ func GetMessageByUserIDHandler(ctx *gin.Context) {
 		return
 	}
 
-	// Отправляем успешный ответ с напоминаниями
 	ctx.JSON(http.StatusOK, gin.H{"reminders": reminders})
 }
 
 // GetAllMessagesHandler godoc
-// @Summary Get all reminders
-// @Description Retrieve a list of all reminders
+// @Summary Получение всех напоминаний
+// @Description Получить список всех напоминаний
 // @Tags reminders
 // @Accept json
 // @Produce json
@@ -65,13 +64,12 @@ func GetAllMessagesHandler(ctx *gin.Context) {
 		return
 	}
 
-	// Отправляем успешный ответ с напоминаниями
 	ctx.JSON(http.StatusOK, gin.H{"reminders": reminders})
 }
 
 // DeleteMessageHandler godoc
-// @Summary Delete a reminder
-// @Description Delete a reminder by ID if it has not been sent
+// @Summary Удалить напоминание
+// @Description Удалить напоминание по идентификатору, если оно не было отправлено
 // @Tags reminders
 // @Accept json
 // @Produce json
@@ -110,13 +108,12 @@ func DeleteMessageHandler(ctx *gin.Context) {
 		return
 	}
 
-	// Отправляем успешный ответ
 	ctx.JSON(http.StatusOK, gin.H{"message": "Reminder deleted successfully"})
 }
 
 // UpdateMessageHandler godoc
-// @Summary Update an existing reminder
-// @Description Update the reminder with the given ID
+// @Summary Обновление существующего напоминания
+// @Description Обновить напоминание с указанным идентификатором
 // @Tags reminders
 // @Accept json
 // @Produce json
@@ -174,8 +171,8 @@ func UpdateMessageHandler(ctx *gin.Context) {
 }
 
 // CreateMessageHandler godoc
-// @Summary Create a new reminder
-// @Description Create a new reminder with the provided details
+// @Summary Создать напоминание
+// @Description Создать новое напоминание с предоставленными деталями
 // @Tags reminders
 // @Accept json
 // @Produce json

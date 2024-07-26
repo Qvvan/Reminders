@@ -1,7 +1,7 @@
 package database
 
 import (
-	"awesomeProject1/envs"
+	"Reminders/internal/envs"
 	"fmt"
 
 	"gorm.io/driver/postgres"

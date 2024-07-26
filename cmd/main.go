@@ -1,6 +1,8 @@
 package main
 
-import "awesomeProject1/server"
+import (
+	"Reminders/internal/server"
+)
 
 func init() {
 	server.InitServer()

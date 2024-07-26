@@ -33,7 +33,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of all reminders
+      description: Получить список всех напоминаний
       produces:
       - application/json
       responses:
@@ -47,13 +47,13 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get all reminders
+      summary: Получение всех напоминаний
       tags:
       - reminders
     post:
       consumes:
       - application/json
-      description: Create a new reminder with the provided details
+      description: Создать новое напоминание с предоставленными деталями
       parameters:
       - description: Reminder object
         in: body
@@ -72,14 +72,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create a new reminder
+      summary: Создать напоминание
       tags:
       - reminders
   /reminders/{id}:
     delete:
       consumes:
       - application/json
-      description: Delete a reminder by ID if it has not been sent
+      description: Удалить напоминание по идентификатору, если оно не было отправлено
       parameters:
       - description: Reminder ID
         in: path
@@ -101,13 +101,13 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Delete a reminder
+      summary: Удалить напоминание
       tags:
       - reminders
     put:
       consumes:
       - application/json
-      description: Update the reminder with the given ID
+      description: Обновить напоминание с указанным идентификатором
       parameters:
       - description: Reminder ID
         in: path
@@ -135,14 +135,14 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Update an existing reminder
+      summary: Обновление существующего напоминания
       tags:
       - reminders
   /reminders/{user_id}:
     get:
       consumes:
       - application/json
-      description: Retrieve all reminders for a specific user
+      description: Получить все напоминания для конкретного пользователя
       parameters:
       - description: User ID
         in: path
@@ -162,7 +162,7 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get reminders by user ID
+      summary: Поиск напоминаний по user_id
       tags:
       - reminders
 swagger: "2.0"
