@@ -3,7 +3,8 @@ package main
 import (
 	"Reminders/internal/database"
 	"Reminders/internal/models"
-	"Reminders/internal/server" // Импортируйте пакет server
+	"Reminders/internal/server"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"time"
@@ -13,13 +14,24 @@ import (
 
 const myTelegramID = 323993202
 
+var logger *zap.Logger
+
+func init() {
+	// Инициализация логгера
+	var err error
+	logger, err = zap.NewProduction()
+	if err != nil {
+		log.Panic("Ошибка инициализации логгера", zap.Error(err))
+	}
+}
+
 func main() {
 	server.InitServer()
 
 	// Инициализация бота
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
-		log.Panic(err)
+		logger.Panic("Ошибка инициализации Telegram бота", zap.Error(err))
 	}
 
 	for {
@@ -35,7 +47,7 @@ func checkAndSendReminders(bot *tgbotapi.BotAPI) {
 
 	// Запрос на получение напоминаний, которые ещё не отправлены и время отправки которых прошло
 	if err := database.DB.Where("is_sent = ? AND send_at <= ?", false, now).Find(&reminders).Error; err != nil {
-		log.Printf("Ошибка при получении напоминаний: %v", err)
+		logger.Error("Ошибка при получении напоминаний", zap.Error(err))
 		return
 	}
 
@@ -43,7 +55,7 @@ func checkAndSendReminders(bot *tgbotapi.BotAPI) {
 		if sendReminder(bot, r) {
 			// Обновление статуса напоминания в базе данных
 			if err := database.DB.Model(&r).Update("is_sent", true).Error; err != nil {
-				log.Printf("Ошибка при обновлении статуса напоминания %d: %v", r.ID, err)
+				logger.Error("Ошибка при обновлении статуса напоминания", zap.Int("reminder_id", r.ID), zap.Error(err))
 			}
 		}
 	}
@@ -54,8 +66,9 @@ func sendReminder(bot *tgbotapi.BotAPI, r models.Reminder) bool {
 	msg := tgbotapi.NewMessage(myTelegramID, r.Message)
 	_, err := bot.Send(msg)
 	if err != nil {
-		log.Printf("Не удалось отправить сообщение: %v", err)
+		logger.Error("Не удалось отправить сообщение", zap.Int("reminder_id", r.ID), zap.Error(err))
 		return false
 	}
+	logger.Info("Сообщение успешно отправлено", zap.Int("reminder_id", r.ID))
 	return true
 }

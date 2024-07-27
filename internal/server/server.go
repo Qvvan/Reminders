@@ -8,7 +8,6 @@ import (
 	"log"
 )
 
-// Создаем глобальную переменную логгера
 var logger *zap.Logger
 
 // InitLogger инициализирует логгер zap.
@@ -18,7 +17,6 @@ func InitLogger() {
 	if err != nil {
 		log.Fatalf("Ошибка инициализации логгера: %v", err)
 	}
-	defer logger.Sync() // flushes buffer, if any
 }
 
 // InitEnvs инициализирует переменные окружения.
@@ -61,4 +59,9 @@ func StartServer() {
 	router := InitRotes()
 	logger.Info("Сервер запущен")
 	router.Run()
+}
+
+// GetLogger возвращает инициализированный логгер.
+func GetLogger() *zap.Logger {
+	return logger
 }

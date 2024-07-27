@@ -9,17 +9,12 @@ import (
 	"time"
 )
 
-// Создаем глобальную переменную логгера
+// Глобальная переменная логгера
 var logger *zap.Logger
 
-// InitLogger инициализирует логгер zap.
-func InitLogger() {
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync() // flushes buffer, if any
+// SetLogger устанавливает логгер для использования в обработчиках.
+func SetLogger(l *zap.Logger) {
+	logger = l
 }
 
 // GetMessageByUserIDHandler godoc
