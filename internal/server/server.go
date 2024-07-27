@@ -4,16 +4,30 @@ import (
 	"Reminders/internal/database"
 	"Reminders/internal/envs"
 	"Reminders/internal/models"
+	"go.uber.org/zap"
 	"log"
 )
+
+// Создаем глобальную переменную логгера
+var logger *zap.Logger
+
+// InitLogger инициализирует логгер zap.
+func InitLogger() {
+	var err error
+	logger, err = zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Ошибка инициализации логгера: %v", err)
+	}
+	defer logger.Sync() // flushes buffer, if any
+}
 
 // InitEnvs инициализирует переменные окружения.
 func InitEnvs() error {
 	err := envs.LoadEnvs()
 	if err != nil {
-		log.Fatal("Ошибка инициализации ENV: ", err)
+		logger.Fatal("Ошибка инициализации ENV", zap.Error(err))
 	}
-	log.Println("Инициализация ENV прошла успешно")
+	logger.Info("Инициализация ENV прошла успешно")
 	return nil
 }
 
@@ -21,21 +35,23 @@ func InitEnvs() error {
 func InitDatabase() error {
 	err := database.InitDatabase()
 	if err != nil {
-		log.Fatal("Ошибка подключения к базе данных: ", err)
+		logger.Fatal("Ошибка подключения к базе данных", zap.Error(err))
 	}
-	log.Println("Успешное подключение к базе данных")
+	logger.Info("Успешное подключение к базе данных")
 	database.DB.AutoMigrate(&models.Reminder{})
 	return nil
 }
 
 // InitServer инициализирует сервер, выполняя все необходимые шаги.
 func InitServer() {
+	InitLogger()
+
 	if err := InitEnvs(); err != nil {
-		log.Fatal(err)
+		logger.Fatal("Ошибка при инициализации окружения", zap.Error(err))
 	}
 
 	if err := InitDatabase(); err != nil {
-		log.Fatal(err)
+		logger.Fatal("Ошибка при инициализации базы данных", zap.Error(err))
 	}
 }
 
@@ -43,5 +59,6 @@ func InitServer() {
 func StartServer() {
 	// Инициализация роутов
 	router := InitRotes()
+	logger.Info("Сервер запущен")
 	router.Run()
 }
