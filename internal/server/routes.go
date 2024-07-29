@@ -8,8 +8,7 @@ import (
 	"github.com/swaggo/gin-swagger"
 )
 
-func InitRotes() *gin.Engine {
-	router := gin.Default()
+func InitRotes(router *gin.Engine) *gin.Engine {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

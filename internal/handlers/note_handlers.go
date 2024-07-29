@@ -17,6 +17,16 @@ func SetLogger(l *zap.Logger) {
 	logger = l
 }
 
+// logRequestDetails логирует подробности запроса.
+func logRequestDetails(ctx *gin.Context, start time.Time) *zap.Logger {
+	return logger.With(
+		zap.String("method", ctx.Request.Method),
+		zap.String("uri", ctx.Request.RequestURI),
+		zap.String("client_ip", ctx.ClientIP()),
+		zap.Duration("elapsed_time", time.Since(start)),
+	)
+}
+
 // GetMessageByUserIDHandler godoc
 // @Summary Поиск напоминаний по user_id
 // @Description Получить все напоминания для конкретного пользователя
@@ -36,19 +46,19 @@ func GetMessageByUserIDHandler(ctx *gin.Context) {
 	// Поиск напоминаний по user_id
 	result := database.DB.Where("user_id = ?", userID).Find(&reminders)
 	if result.Error != nil {
-		logger.Error("Failed to fetch reminders", zap.String("user_id", userID), zap.Error(result.Error))
+		logRequestDetails(ctx, start).Error("Failed to fetch reminders", zap.String("user_id", userID), zap.Error(result.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch reminders"})
 		return
 	}
 
 	// Проверяем, если напоминания не найдены
 	if result.RowsAffected == 0 {
-		logger.Info("No reminders found for user_id", zap.String("user_id", userID))
+		logRequestDetails(ctx, start).Info("No reminders found for user_id", zap.String("user_id", userID))
 		ctx.JSON(http.StatusNotFound, gin.H{"message": "No reminders found for the given user_id"})
 		return
 	}
 
-	logger.Info("Reminders fetched successfully", zap.String("user_id", userID), zap.Duration("elapsed_time", time.Since(start)))
+	logRequestDetails(ctx, start).Info("Reminders fetched successfully", zap.String("user_id", userID), zap.Int64("row_count", result.RowsAffected))
 	ctx.JSON(http.StatusOK, gin.H{"reminders": reminders})
 }
 
@@ -68,19 +78,19 @@ func GetAllMessagesHandler(ctx *gin.Context) {
 	// Получение всех напоминаний
 	result := database.DB.Find(&reminders)
 	if result.Error != nil {
-		logger.Error("Failed to fetch reminders", zap.Error(result.Error))
+		logRequestDetails(ctx, start).Error("Failed to fetch reminders", zap.Error(result.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch reminders"})
 		return
 	}
 
 	// Проверяем, если напоминания не найдены
 	if result.RowsAffected == 0 {
-		logger.Info("No reminders found")
+		logRequestDetails(ctx, start).Info("No reminders found")
 		ctx.JSON(http.StatusNotFound, gin.H{"message": "No reminders found"})
 		return
 	}
 
-	logger.Info("All reminders fetched successfully", zap.Duration("elapsed_time", time.Since(start)))
+	logRequestDetails(ctx, start).Info("All reminders fetched successfully", zap.Int64("row_count", result.RowsAffected))
 	ctx.JSON(http.StatusOK, gin.H{"reminders": reminders})
 }
 
@@ -103,21 +113,21 @@ func DeleteMessageHandler(ctx *gin.Context) {
 	var reminder models.Reminder
 	result := database.DB.First(&reminder, reminderID)
 	if result.Error != nil {
-		logger.Error("Failed to find reminder", zap.String("reminder_id", reminderID), zap.Error(result.Error))
+		logRequestDetails(ctx, start).Error("Failed to find reminder", zap.String("reminder_id", reminderID), zap.Error(result.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find reminder"})
 		return
 	}
 
 	// Проверка, если напоминание не найдено
 	if result.RowsAffected == 0 {
-		logger.Info("No reminder found with the given ID", zap.String("reminder_id", reminderID))
+		logRequestDetails(ctx, start).Info("No reminder found with the given ID", zap.String("reminder_id", reminderID))
 		ctx.JSON(http.StatusNotFound, gin.H{"message": "No reminder found with the given ID"})
 		return
 	}
 
 	// Проверка, если напоминание уже отправлено
 	if reminder.IsSent {
-		logger.Info("Cannot delete reminder that has already been sent", zap.String("reminder_id", reminderID))
+		logRequestDetails(ctx, start).Info("Cannot delete reminder that has already been sent", zap.String("reminder_id", reminderID))
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Cannot delete reminder that has already been sent"})
 		return
 	}
@@ -125,12 +135,12 @@ func DeleteMessageHandler(ctx *gin.Context) {
 	// Удаление напоминания по ID
 	deleteResult := database.DB.Delete(&reminder)
 	if deleteResult.Error != nil {
-		logger.Error("Failed to delete reminder", zap.String("reminder_id", reminderID), zap.Error(deleteResult.Error))
+		logRequestDetails(ctx, start).Error("Failed to delete reminder", zap.String("reminder_id", reminderID), zap.Error(deleteResult.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete reminder"})
 		return
 	}
 
-	logger.Info("Reminder deleted successfully", zap.String("reminder_id", reminderID), zap.Duration("elapsed_time", time.Since(start)))
+	logRequestDetails(ctx, start).Info("Reminder deleted successfully", zap.String("reminder_id", reminderID))
 	ctx.JSON(http.StatusOK, gin.H{"message": "Reminder deleted successfully"})
 }
 
@@ -153,7 +163,7 @@ func UpdateMessageHandler(ctx *gin.Context) {
 
 	// Разбираем JSON из тела запроса
 	if err := ctx.ShouldBindJSON(&updatedReminder); err != nil {
-		logger.Error("Invalid request data", zap.Error(err))
+		logRequestDetails(ctx, start).Error("Invalid request data", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
@@ -162,21 +172,21 @@ func UpdateMessageHandler(ctx *gin.Context) {
 	var existingReminder models.Reminder
 	result := database.DB.First(&existingReminder, reminderID)
 	if result.Error != nil {
-		logger.Error("Failed to find reminder", zap.String("reminder_id", reminderID), zap.Error(result.Error))
+		logRequestDetails(ctx, start).Error("Failed to find reminder", zap.String("reminder_id", reminderID), zap.Error(result.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find reminder"})
 		return
 	}
 
 	// Проверка, если напоминание не найдено
 	if result.RowsAffected == 0 {
-		logger.Info("No reminder found with the given ID", zap.String("reminder_id", reminderID))
+		logRequestDetails(ctx, start).Info("No reminder found with the given ID", zap.String("reminder_id", reminderID))
 		ctx.JSON(http.StatusNotFound, gin.H{"message": "No reminder found with the given ID"})
 		return
 	}
 
 	// Проверка, если напоминание уже отправлено
 	if existingReminder.IsSent {
-		logger.Info("Cannot update reminder that has already been sent", zap.String("reminder_id", reminderID))
+		logRequestDetails(ctx, start).Info("Cannot update reminder that has already been sent", zap.String("reminder_id", reminderID))
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Cannot update reminder that has already been sent"})
 		return
 	}
@@ -190,12 +200,12 @@ func UpdateMessageHandler(ctx *gin.Context) {
 	// Сохранение обновленного напоминания в базе данных
 	saveResult := database.DB.Save(&existingReminder)
 	if saveResult.Error != nil {
-		logger.Error("Failed to update reminder", zap.String("reminder_id", reminderID), zap.Error(saveResult.Error))
+		logRequestDetails(ctx, start).Error("Failed to update reminder", zap.String("reminder_id", reminderID), zap.Error(saveResult.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update reminder"})
 		return
 	}
 
-	logger.Info("Reminder updated successfully", zap.String("reminder_id", reminderID), zap.Duration("elapsed_time", time.Since(start)), zap.Any("updated_reminder", existingReminder))
+	logRequestDetails(ctx, start).Info("Reminder updated successfully", zap.String("reminder_id", reminderID), zap.Any("updated_reminder", existingReminder))
 	ctx.JSON(http.StatusOK, gin.H{"message": "Reminder updated successfully", "reminder": existingReminder})
 }
 
@@ -215,7 +225,7 @@ func CreateMessageHandler(ctx *gin.Context) {
 
 	// Разбираем JSON из тела запроса
 	if err := ctx.ShouldBindJSON(&newReminder); err != nil {
-		logger.Error("Invalid request data", zap.Error(err))
+		logRequestDetails(ctx, start).Error("Invalid request data", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
@@ -228,12 +238,12 @@ func CreateMessageHandler(ctx *gin.Context) {
 	// Сохраняем напоминание в базе данных
 	result := database.DB.Create(&newReminder)
 	if result.Error != nil {
-		logger.Error("Failed to create reminder", zap.Error(result.Error))
+		logRequestDetails(ctx, start).Error("Failed to create reminder", zap.Error(result.Error))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reminder"})
 		return
 	}
 
-	logger.Info("Reminder created successfully", zap.Duration("elapsed_time", time.Since(start)), zap.Any("new_reminder", newReminder))
+	logRequestDetails(ctx, start).Info("Reminder created successfully", zap.Any("new_reminder", newReminder))
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Reminder created successfully", "reminder": newReminder})
 }
 

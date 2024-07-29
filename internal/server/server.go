@@ -4,6 +4,7 @@ import (
 	"Reminders/internal/database"
 	"Reminders/internal/envs"
 	"Reminders/internal/models"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"log"
 )
@@ -55,8 +56,15 @@ func InitServer() {
 
 // StartServer запускает сервер.
 func StartServer() {
-	// Инициализация роутов
-	router := InitRotes()
+	// Отключение стандартного логирования от gin
+	gin.DisableConsoleColor()
+	gin.SetMode(gin.ReleaseMode)
+
+	router := gin.New()        // вместо gin.Default()
+	router.Use(gin.Recovery()) // middleware для восстановления от паники
+
+	// Инициализация маршрутов
+	router = InitRotes(router)
 	logger.Info("Сервер запущен")
 	router.Run()
 }
