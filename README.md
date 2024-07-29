@@ -35,12 +35,14 @@ A simple CRUD service to send delayed messages (reminders) to Telegram. Built wi
    git clone https://github.com/yourusername/telegram-reminder-service.git
    cd telegram-reminder-service
    ```
-2. **Create a .env file in the root directory with your Telegram bot token:**
-3. **Run with Docker Compose:**
+2. **Create a .env file in the root directory.**
+   
+4. **Run with Docker Compose:**
    ```sh
    docker-compose up --build
    ```
-4. **Access Swagger Documentation:**
+   
+5. **Access Swagger Documentation:**
    Open your browser and go to http://localhost:8080/swagger/index.html.
    
 ## 📝 Logging
